@@ -1,0 +1,12 @@
+[package]
+name = "linkchain"
+version = "0.1.0"
+authors = ["ben-han-cn <ben.han.cn@gmail.com>"]
+
+[dependencies]
+lccore = {path = "lccore"}
+
+
+[[bin]]
+path = "linkchain/main.rs"
+name = "linkchain"

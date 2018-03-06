@@ -1,0 +1,11 @@
+[package]
+name = "lccore"
+version = "0.1.0"
+authors = ["ben-han-cn <ben.han.cn@gmail.com>"]
+
+[dependencies]
+ethereum-types = "0.1"
+rlp = {path = "../rlp"}
+bytes = {path = "../util/bytes"}
+keccak-hash= {path = "../util/hash"}
+
