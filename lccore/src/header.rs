@@ -53,7 +53,6 @@ impl Default for Header {
             timestamp: 0,
             extra_data: vec![],
             mix_digest: H256::default(),
-            //nonce: [0; 8],
             nonce: vec![],
         }
     }
@@ -145,29 +144,44 @@ impl Header {
 
 impl Decodable for Header {
     fn decode(r: &UntrustedRlp) -> Result<Self, DecoderError> {
-        let mut header = Header {
+        let item_count = r.item_count()?;
+        if item_count == 14 {
+          return Ok(Header {
             parent_hash: r.val_at(0)?,
-            coinbase: r.val_at(2)?,
-            state_root: r.val_at(3)?,
-            transactions_root: r.val_at(4)?,
-            receipts_root: r.val_at(5)?,
-            log_bloom: r.val_at(6)?,
-            difficulty: r.val_at(7)?,
-            number: r.val_at(8)?,
-            gas_limit: r.val_at(9)?,
-            gas_used: r.val_at(10)?,
-            timestamp: r.val_at::<U256>(11)?.as_u64(),
-            extra_data: r.val_at(12)?,
+            coinbase: r.val_at(1)?,
+            state_root: r.val_at(2)?,
+            transactions_root: r.val_at(3)?,
+            receipts_root: r.val_at(4)?,
+            log_bloom: r.val_at(5)?,
+            difficulty: r.val_at(6)?,
+            number: r.val_at(7)?,
+            gas_limit: r.val_at(8)?,
+            gas_used: r.val_at(9)?,
+            timestamp: r.val_at::<U256>(10)?.as_u64(),
+            extra_data: r.val_at(11)?,
+            mix_digest: r.val_at(12)?,
+            nonce: r.val_at(13)?,
+          });
+        } else if item_count == 12 {
+           return Ok(Header {
+            parent_hash: r.val_at(0)?,
+            coinbase: r.val_at(1)?,
+            state_root: r.val_at(2)?,
+            transactions_root: r.val_at(3)?,
+            receipts_root: r.val_at(4)?,
+            log_bloom: r.val_at(5)?,
+            difficulty: r.val_at(6)?,
+            number: r.val_at(7)?,
+            gas_limit: r.val_at(8)?,
+            gas_used: r.val_at(9)?,
+            timestamp: r.val_at::<U256>(10)?.as_u64(),
+            extra_data: r.val_at(11)?,
             mix_digest: H256::default(),
             nonce: vec![],
-        };
-
-        if r.item_count()? == 15 {
-            header.mix_digest = r.val_at(13)?;
-            header.nonce = r.val_at(14)?;
-            //header.nonce.copy_from_slice(&r.at(14)?.as_raw()[0..8]);
+          });
+        } else {
+          return Err(DecoderError::RlpIncorrectListLen);
         }
-        Ok(header)
     }
 }
 
@@ -188,7 +202,7 @@ mod tests {
 
     #[test]
     fn test_header_decode() {
-        let header_rlp = "f901f9a083cafc574e1f51ba9dc0568fc617a08ea2429fb384059c972f13b19fa1c8dd55a00000000000000000000000000000000000000000000000000000000000000000948888f1f195afa192cfee860698584c030f4c9db1a0ef1552a40b7165c3cd773806b9e0c165b75356e0314bf0706f279c729f51e017a05fe50b260da6308036625b850b5d6ced6d0a9f814c0688bc91ffb7b7a3a54b67a0bc37d79753ad738a6dac4921e57392f145d8887476de3f783dfa7edae9283e52b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302000001832fefd8825208845506eb0780a0bd4472abb6659ebe3ee06ee4d7b72a00a9f4d001caca51342001075469aff49888a13a5a8c8f2bb1c4".from_hex().unwrap();
+        let header_rlp = "f901d8a083cafc574e1f51ba9dc0568fc617a08ea2429fb384059c972f13b19fa1c8dd55948888f1f195afa192cfee860698584c030f4c9db1a0ef1552a40b7165c3cd773806b9e0c165b75356e0314bf0706f279c729f51e017a05fe50b260da6308036625b850b5d6ced6d0a9f814c0688bc91ffb7b7a3a54b67a0bc37d79753ad738a6dac4921e57392f145d8887476de3f783dfa7edae9283e52b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302000001832fefd8825208845506eb0780a0bd4472abb6659ebe3ee06ee4d7b72a00a9f4d001caca51342001075469aff49888a13a5a8c8f2bb1c4".from_hex().unwrap();
         let expected_header: Header = rlp::decode(&header_rlp);
         let mut nonce: Bytes = vec![0;8];
         BigEndian::write_u64(&mut nonce, 0xa13a5a8c8f2bb1c4); 

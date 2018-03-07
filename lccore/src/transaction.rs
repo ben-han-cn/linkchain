@@ -1,7 +1,6 @@
 use ethereum_types::{H256, U256, Address, Bloom};
 use bytes::Bytes;
 use rlp::{UntrustedRlp, RlpStream, Encodable, Decodable, DecoderError};
-//use keccak_hash::{KECCAK_NULL_RLP, keccak};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Recipient(Option<Address>);
@@ -75,6 +74,7 @@ impl Decodable for Transaction {
         if d.item_count()? != 9 {
             return Err(DecoderError::RlpIncorrectListLen);
         }
+
         Ok(Transaction {
             nonce: d.val_at(0)?,
             gas_price: d.val_at(1)?,
@@ -91,15 +91,23 @@ impl Decodable for Transaction {
 
 #[cfg(test)]
 mod tests {
-    /*
-       use rustc_hex::FromHex;
-       use rlp;
-       use super::Header;
-       */
+    use rustc_hex::FromHex;
+    use rlp;
+    use super::{Transaction, Recipient};
+    use ethereum_types::{U256, Address, Bloom};
 
     #[test]
-    fn test_header_seal_fields() {}
-
-    #[test]
-    fn decode_and_encode_header() {}
+    fn test_tx_decode() {
+        let tx_rlp = "f86103018207d094b94f5374fce5edbc8e2a8697c15331677e6ebf0b0a8255441ca098ff921201554726367d2be8c804a7ff89ccf285ebc57dff8ae4c44b9c19ac4aa08887321be575c8095f789dd4c743dfe42c1820f9231f98a962b210e3ac2452a3".from_hex().unwrap();
+        let tx: Transaction = rlp::decode(&tx_rlp);
+        assert_eq!(tx.nonce, 3);
+        assert_eq!(tx.gas_price, U256::from(1));
+        assert_eq!(tx.gas_limit, U256::from(2000));
+        assert_eq!(tx.recipient, Recipient(Some(Address::from("b94f5374fce5edbc8e2a8697c15331677e6ebf0b".from_hex().unwrap().as_slice()))));
+        assert_eq!(tx.amount, U256::from(10));
+        assert_eq!(tx.payload, "5544".from_hex().unwrap().as_slice());
+        assert_eq!(tx.r, U256::from("98ff921201554726367d2be8c804a7ff89ccf285ebc57dff8ae4c44b9c19ac4a".from_hex().unwrap().as_slice()));
+        assert_eq!(tx.s, U256::from("8887321be575c8095f789dd4c743dfe42c1820f9231f98a962b210e3ac2452a3".from_hex().unwrap().as_slice()));
+        assert_eq!(tx.v, U256::from(28));
+    }
 }
