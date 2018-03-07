@@ -8,4 +8,6 @@ ethereum-types = "0.1"
 rlp = {path = "../rlp"}
 bytes = {path = "../util/bytes"}
 keccak-hash= {path = "../util/hash"}
+rustc-hex = "1.0"
+byteorder = "1.0"
 

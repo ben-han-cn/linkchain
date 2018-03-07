@@ -2,6 +2,7 @@ use ethereum_types::{H256, U256, Address, Bloom};
 use bytes::Bytes;
 use rlp::{UntrustedRlp, RlpStream, Encodable, Decodable, DecoderError};
 use keccak_hash::{KECCAK_NULL_RLP, keccak};
+use byteorder::{BigEndian, ByteOrder};
 
 #[derive(Debug, Clone, Eq)]
 pub struct Header {
@@ -18,7 +19,7 @@ pub struct Header {
     pub timestamp: u64,
     pub extra_data: Bytes,
     pub mix_digest: H256,
-    pub nonce: [u8;8],
+    pub nonce: Bytes,
 }
 
 impl PartialEq for Header {
@@ -52,7 +53,8 @@ impl Default for Header {
             timestamp: 0,
             extra_data: vec![],
             mix_digest: H256::default(),
-            nonce: [0; 8],
+            //nonce: [0; 8],
+            nonce: vec![],
         }
     }
 }
@@ -98,8 +100,8 @@ impl Header {
     pub fn difficulty(&self) -> &U256 {
         &self.difficulty
     }
-    pub fn nonce(&self) -> &[u8]{
-        &self.nonce
+    pub fn nonce(&self) -> u64{
+        BigEndian::read_u64(&self.nonce.as_slice()[0..8])
     }
 
     /// Place this header into an RLP stream `s`, optionally `with_seal`.
@@ -157,12 +159,13 @@ impl Decodable for Header {
             timestamp: r.val_at::<U256>(11)?.as_u64(),
             extra_data: r.val_at(12)?,
             mix_digest: H256::default(),
-            nonce: [0; 8],
+            nonce: vec![],
         };
 
         if r.item_count()? == 15 {
             header.mix_digest = r.val_at(13)?;
-            header.nonce.copy_from_slice(&r.at(14)?.as_raw()[0..8]);
+            header.nonce = r.val_at(14)?;
+            //header.nonce.copy_from_slice(&r.at(14)?.as_raw()[0..8]);
         }
         Ok(header)
     }
@@ -176,15 +179,35 @@ impl Encodable for Header {
 
 #[cfg(test)]
 mod tests {
-    /*
-       use rustc_hex::FromHex;
-       use rlp;
-       use super::Header;
-       */
+    use rustc_hex::FromHex;
+    use rlp;
+    use super::Header;
+    use ethereum_types::{H256, U256, Address, Bloom};
+    use byteorder::{BigEndian, ByteOrder};
+    use bytes::Bytes;
 
     #[test]
-    fn test_header_seal_fields() {}
-
-    #[test]
-    fn decode_and_encode_header() {}
+    fn test_header_decode() {
+        let header_rlp = "f901f9a083cafc574e1f51ba9dc0568fc617a08ea2429fb384059c972f13b19fa1c8dd55a00000000000000000000000000000000000000000000000000000000000000000948888f1f195afa192cfee860698584c030f4c9db1a0ef1552a40b7165c3cd773806b9e0c165b75356e0314bf0706f279c729f51e017a05fe50b260da6308036625b850b5d6ced6d0a9f814c0688bc91ffb7b7a3a54b67a0bc37d79753ad738a6dac4921e57392f145d8887476de3f783dfa7edae9283e52b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302000001832fefd8825208845506eb0780a0bd4472abb6659ebe3ee06ee4d7b72a00a9f4d001caca51342001075469aff49888a13a5a8c8f2bb1c4".from_hex().unwrap();
+        let expected_header: Header = rlp::decode(&header_rlp);
+        let mut nonce: Bytes = vec![0;8];
+        BigEndian::write_u64(&mut nonce, 0xa13a5a8c8f2bb1c4); 
+        let header = Header {
+          parent_hash: H256::from("83cafc574e1f51ba9dc0568fc617a08ea2429fb384059c972f13b19fa1c8dd55".from_hex().unwrap().as_slice()),
+          coinbase: Address::from("8888f1f195afa192cfee860698584c030f4c9db1".from_hex().unwrap().as_slice()),
+          state_root: H256::from("ef1552a40b7165c3cd773806b9e0c165b75356e0314bf0706f279c729f51e017".from_hex().unwrap().as_slice()),
+          receipts_root: H256::from("bc37d79753ad738a6dac4921e57392f145d8887476de3f783dfa7edae9283e52".from_hex().unwrap().as_slice()),
+          transactions_root: H256::from("5fe50b260da6308036625b850b5d6ced6d0a9f814c0688bc91ffb7b7a3a54b67".from_hex().unwrap().as_slice()),
+          log_bloom: Bloom::default(),
+          difficulty: U256::from(131072),
+          number: 1,
+          gas_used: U256::from(21000),
+          gas_limit: U256::from(3141592),
+          timestamp: 1426516743,
+          extra_data: vec![],
+          mix_digest: H256::from("bd4472abb6659ebe3ee06ee4d7b72a00a9f4d001caca51342001075469aff498".from_hex().unwrap().as_slice()),
+          nonce: nonce,
+        };
+        assert_eq!(header, expected_header);
+    }
 }
