@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use rlp::{UntrustedRlp, RlpStream, Decodable, Encodable, DecoderError};
+use rlp::{Decodable, DecoderError, Encodable, RlpStream, UntrustedRlp};
 use header::Header;
 use transaction::Transaction;
 
@@ -25,7 +25,6 @@ impl Encodable for Block {
         s.append_list(&self.transactions);
     }
 }
-
 
 impl Decodable for Block {
     fn decode(rlp: &UntrustedRlp) -> Result<Self, DecoderError> {

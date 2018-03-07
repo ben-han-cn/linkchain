@@ -1,6 +1,6 @@
-use ethereum_types::{H256, U256, Address, Bloom};
+use ethereum_types::{Address, Bloom, H256, U256};
 use bytes::Bytes;
-use rlp::{UntrustedRlp, RlpStream, Encodable, Decodable, DecoderError};
+use rlp::{Decodable, DecoderError, Encodable, RlpStream, UntrustedRlp};
 
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct Recipient(Option<Address>);
@@ -9,7 +9,7 @@ impl Encodable for Recipient {
     fn rlp_append(&self, s: &mut RlpStream) {
         match self.0 {
             Some(ref addr) => s.append_internal(addr),
-                None => s.append_internal(&""),
+            None => s.append_internal(&""),
         };
     }
 }
@@ -39,7 +39,7 @@ pub struct Transaction {
 
 impl Transaction {
     pub fn new() -> Self {
-        Transaction{
+        Transaction {
             nonce: 0,
             gas_price: U256::default(),
             gas_limit: U256::default(),
@@ -52,7 +52,6 @@ impl Transaction {
         }
     }
 }
-
 
 impl Encodable for Transaction {
     fn rlp_append(&self, s: &mut RlpStream) {
@@ -93,8 +92,8 @@ impl Decodable for Transaction {
 mod tests {
     use rustc_hex::FromHex;
     use rlp;
-    use super::{Transaction, Recipient};
-    use ethereum_types::{U256, Address, Bloom};
+    use super::{Recipient, Transaction};
+    use ethereum_types::{Address, Bloom, U256};
 
     #[test]
     fn test_tx_decode() {
@@ -103,11 +102,35 @@ mod tests {
         assert_eq!(tx.nonce, 3);
         assert_eq!(tx.gas_price, U256::from(1));
         assert_eq!(tx.gas_limit, U256::from(2000));
-        assert_eq!(tx.recipient, Recipient(Some(Address::from("b94f5374fce5edbc8e2a8697c15331677e6ebf0b".from_hex().unwrap().as_slice()))));
+        assert_eq!(
+            tx.recipient,
+            Recipient(Some(Address::from(
+                "b94f5374fce5edbc8e2a8697c15331677e6ebf0b"
+                    .from_hex()
+                    .unwrap()
+                    .as_slice()
+            )))
+        );
         assert_eq!(tx.amount, U256::from(10));
         assert_eq!(tx.payload, "5544".from_hex().unwrap().as_slice());
-        assert_eq!(tx.r, U256::from("98ff921201554726367d2be8c804a7ff89ccf285ebc57dff8ae4c44b9c19ac4a".from_hex().unwrap().as_slice()));
-        assert_eq!(tx.s, U256::from("8887321be575c8095f789dd4c743dfe42c1820f9231f98a962b210e3ac2452a3".from_hex().unwrap().as_slice()));
+        assert_eq!(
+            tx.r,
+            U256::from(
+                "98ff921201554726367d2be8c804a7ff89ccf285ebc57dff8ae4c44b9c19ac4a"
+                    .from_hex()
+                    .unwrap()
+                    .as_slice()
+            )
+        );
+        assert_eq!(
+            tx.s,
+            U256::from(
+                "8887321be575c8095f789dd4c743dfe42c1820f9231f98a962b210e3ac2452a3"
+                    .from_hex()
+                    .unwrap()
+                    .as_slice()
+            )
+        );
         assert_eq!(tx.v, U256::from(28));
     }
 }
